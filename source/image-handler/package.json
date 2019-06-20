@@ -10,9 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "mocha": "^6.1.4",
+    "nyc": "^14.0.0",
     "sharp": "^0.21.3",
-    "sinon": "^7.3.2",
-    "nyc": "^14.0.0"
+    "sinon": "^7.3.2"
   },
   "devDependencies": {
     "aws-sdk": "^2.437.0",
@@ -24,6 +24,6 @@
     "build:init": "rm -rf package-lock.json && rm -rf dist && rm -rf node_modules",
     "build:zip": "zip -rq image-handler.zip . -x template.yml",
     "build:dist": "mkdir dist && mv image-handler.zip dist/",
-    "build": "npm run build:init && npm install --production && npm run build:zip && npm run build:dist"
+    "build": "npm run build:init && npm install --production && rm -rf node_modules/sharp && npm install --arch=x64 --platform=linux --target=8.10.0 sharp && npm run build:zip && npm run build:dist"
   }
 }
