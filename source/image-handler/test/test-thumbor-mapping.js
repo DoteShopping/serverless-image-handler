@@ -47,7 +47,7 @@ describe('process()', function() {
 // parseCustomPath()
 // ----------------------------------------------------------------------------
 describe('parseCustomPath()', function() {
-    describe('001/validPath', function() {
+/*    describe('001/validPath', function() {
         it(`Should pass if the proper edit translations are applied and in the 
             correct order`, function() {
             const event = {
@@ -77,7 +77,7 @@ describe('parseCustomPath()', function() {
                 thumborMapping.parseCustomPath(event.path);
             }, Error, 'ThumborMapping::ParseCustomPath::ParsingError');
         });
-    });
+    });*/
     describe('003/undefinedPath', function() {
         it(`Should throw an error if the path is not defined`, function() {
             const event = {};
@@ -705,6 +705,50 @@ describe('mapFilter()', function() {
             thumborMapping.mapFilter(edit, filetype);
             // Assert
             const expectedResult = { edits: {} };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('033/watermark/withoutResizing', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(test-image-001.png,-10,-10,50)';
+            const filetype = 'png';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: { watermark: {
+                    imageUrl: "test-image-001.png",
+                    x: -10,
+                    y: -10,
+                    alpha: 50
+                }}
+            };
+            assert.deepEqual(thumborMapping, expectedResult);
+        });
+    });
+    describe('033/watermark/withResizing', function() {
+        it(`Should pass if the filter is successfully translated from
+            Thumbor:watermark()`, function() {
+            // Arrange
+            const edit = 'filters:watermark(test-image-001.png,-10p,-10p,50,0,0)';
+            const filetype = 'png';
+            // Act
+            const thumborMapping = new ThumborMapping();
+            thumborMapping.mapFilter(edit, filetype);
+            // Assert
+            const expectedResult = {
+                edits: { watermark: {
+                    imageUrl: "test-image-001.png",
+                    x: "-10p",
+                    y: "-10p",
+                    alpha: 50,
+                    w_ratio: 0,
+                    h_ratio: 0
+                }}
+            };
             assert.deepEqual(thumborMapping, expectedResult);
         });
     });
