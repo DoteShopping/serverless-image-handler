@@ -67,7 +67,23 @@ class ImageHandler {
                         message: 'The padding value you provided exceeds the boundaries of the original image. Please try choosing a smaller value or applying padding via Sharp for greater specificity.'
                     });
                 }
-            } else {  
+            } else if (key === 'watermark') {
+                const raw = edits['watermark'].split(',');
+                const dimensions = {width: parseInt(raw[0]), height: parseInt(raw[1])};
+                console.log(raw);
+                console.log(dimensions);
+                if (dimensions['height'] < 600) {
+                    console.log('small');
+                    image.overlayWith('logo.png', { top: Math.round(dimensions['height']*.2), left: Math.round(dimensions['width']*.1) } );
+                } else if (dimensions['height'] < 1200) {
+                    console.log('medium');
+                    image.overlayWith('logo_2x.png', { top: Math.round(dimensions['height']*.2), left: Math.round(dimensions['width']*.1) } );
+                } else {
+                    console.log('large');
+                    image.overlayWith('logo_3x.png', { top: Math.round(dimensions['height']*.2), left: Math.round(dimensions['width']*.1) } );
+                }
+                
+            } else {
                 image[key](value);  
             }  
         }  

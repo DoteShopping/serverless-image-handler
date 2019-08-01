@@ -185,23 +185,10 @@ class ThumborMapping {
         this.edits.watermark = {};
       }
       const values = value.split(",");
-      if (values.length > 4) {
-        this.edits.watermark = {
-          imageUrl: values[0],
-          x: values[1],
-          y: values[2],
-          alpha: values[3],
-          w_ratio: values[4],
-          h_ratio: values[5]
-        };
-      } else {
-        this.edits.watermark = {
-          imageUrl: values[0],
-          x: values[1],
-          y: values[2],
-          alpha: values[3]
-        };
-      }
+      this.edits.watermark = {
+        width: values[0],
+        height: values[1]
+      };
     } else {
       return undefined;
     }
