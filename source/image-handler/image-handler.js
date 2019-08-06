@@ -27,8 +27,6 @@ async function watermark_image(
   logo_height,
   font_size
 ) {
-  //var tmpobj = tmp.fileSync({ mode: "0755", prefix: 'svg-', postfix: '.svg' });
-  //let svg = watermark_username(username);
   const textToSVG = TextToSVG.loadSync();
   const attributes = { fill: "white", stroke: "white" };
   const options = {
