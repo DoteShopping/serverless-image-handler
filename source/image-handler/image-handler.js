@@ -13,6 +13,46 @@
 
 const AWS = require("aws-sdk");
 const sharp = require("sharp");
+const tmp = require("tmp");
+const fs = require("fs");
+const TextToSVG = require("text-to-svg");
+
+async function watermark_image(
+  image,
+  username,
+  width,
+  height,
+  logo,
+  logo_width,
+  logo_height,
+  font_size
+) {
+  //var tmpobj = tmp.fileSync({ mode: "0755", prefix: 'svg-', postfix: '.svg' });
+  //let svg = watermark_username(username);
+  const textToSVG = TextToSVG.loadSync();
+  const attributes = { fill: "white", stroke: "white" };
+  const options = {
+    x: 0,
+    y: 0,
+    fontSize: font_size,
+    anchor: "left top",
+    attributes: attributes
+  };
+  const svg = textToSVG.getSVG("@" + username, options);
+  return sharp(
+    new Buffer.from(
+      await image
+        .overlayWith(logo, {
+          top: Math.round(height * 0.2),
+          left: Math.round(width * 0.1)
+        })
+        .toBuffer()
+    )
+  ).overlayWith(new Buffer.from(svg), {
+    top: Math.round(height * 0.2 + logo_height + 5),
+    left: Math.round(width * 0.1)
+  });
+}
 
 class ImageHandler {
   /**
@@ -43,7 +83,7 @@ class ImageHandler {
    */
 
   async applyEdits(originalImage, edits) {
-    const image = sharp(originalImage);
+    var image = sharp(originalImage);
     const keys = Object.keys(edits);
     const values = Object.values(edits);
     // Apply the image edits
@@ -79,26 +119,49 @@ class ImageHandler {
           width: parseInt(raw[0]),
           height: parseInt(raw[1])
         };
+        const username = raw[2];
         console.log(raw);
         console.log(dimensions);
         if (dimensions["height"] < 600) {
           console.log("small");
-          image.overlayWith("logo.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          console.log(image);
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo.png",
+            76,
+            36,
+            16
+          );
+          return watermark;
         } else if (dimensions["height"] < 1200) {
           console.log("medium");
-          image.overlayWith("logo_2x.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo_2x.png",
+            152,
+            72,
+            20
+          );
+          return watermark;
         } else {
           console.log("large");
-          image.overlayWith("logo_3x.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo_3x.png",
+            228,
+            108,
+            24
+          );
+          return watermark;
         }
       } else {
         image[key](value);
@@ -194,4 +257,5 @@ class ImageHandler {
 }
 
 // Exports
+//module.exports = watermark_image;
 module.exports = ImageHandler;
