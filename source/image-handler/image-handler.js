@@ -39,7 +39,7 @@ async function watermark_image(
     anchor: "left top",
     attributes: attributes
   };
-  const svg = textToSVG.getSVG("@" + username, options);
+  const svg = textToSVG.getSVG(username, options);
   // we need to chain these asynchronous calls and their resulting promises due
   // presumably to how the event loop works when running this code on aws lambda
   return sharp(
@@ -122,7 +122,12 @@ class ImageHandler {
           width: parseInt(raw[0]),
           height: parseInt(raw[1])
         };
-        const username = raw[2];
+        let username = raw[2];
+        if (username.length != 0) {
+            username = "@" + username
+        } else {
+            username = ""
+        }
         console.log(raw);
         console.log(dimensions);
         if (dimensions["height"] < 600) {
