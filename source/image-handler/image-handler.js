@@ -13,6 +13,49 @@
 
 const AWS = require("aws-sdk");
 const sharp = require("sharp");
+const tmp = require("tmp");
+const fs = require("fs");
+const TextToSVG = require("text-to-svg");
+
+async function watermark_image(
+  image,
+  username,
+  width,
+  height,
+  logo,
+  logo_width,
+  logo_height,
+  font_size
+) {
+  const watermarkTargetHeight = 0.2
+  const watermarkTargetWidth = 0.1
+  const watermarkOffset = 5
+  const textToSVG = TextToSVG.loadSync();
+  const attributes = { fill: "white", stroke: "white" };
+  const options = {
+    x: 0,
+    y: 0,
+    fontSize: font_size,
+    anchor: "left top",
+    attributes: attributes
+  };
+  const svg = textToSVG.getSVG(username, options);
+  // we need to chain these asynchronous calls and their resulting promises due
+  // presumably to how the event loop works when running this code on aws lambda
+  return sharp(
+    new Buffer.from(
+      await image
+        .overlayWith(logo, {
+          top: Math.round(height * watermarkTargetHeight),
+          left: Math.round(width * watermarkTargetWidth)
+        })
+        .toBuffer()
+    )
+  ).overlayWith(new Buffer.from(svg), {
+    top: Math.round(height * watermarkTargetHeight + logo_height + watermarkOffset),
+    left: Math.round(width * watermarkTargetWidth)
+  });
+}
 
 class ImageHandler {
   /**
@@ -43,7 +86,7 @@ class ImageHandler {
    */
 
   async applyEdits(originalImage, edits) {
-    const image = sharp(originalImage);
+    var image = sharp(originalImage);
     const keys = Object.keys(edits);
     const values = Object.values(edits);
     // Apply the image edits
@@ -79,26 +122,54 @@ class ImageHandler {
           width: parseInt(raw[0]),
           height: parseInt(raw[1])
         };
+        let username = raw[2];
+        if (username.length != 0) {
+            username = "@" + username
+        } else {
+            username = ""
+        }
         console.log(raw);
         console.log(dimensions);
         if (dimensions["height"] < 600) {
           console.log("small");
-          image.overlayWith("logo.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          console.log(image);
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo.png",
+            76,
+            36,
+            16
+          );
+          return watermark;
         } else if (dimensions["height"] < 1200) {
           console.log("medium");
-          image.overlayWith("logo_2x.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo_2x.png",
+            152,
+            72,
+            20
+          );
+          return watermark;
         } else {
           console.log("large");
-          image.overlayWith("logo_3x.png", {
-            top: Math.round(dimensions["height"] * 0.2),
-            left: Math.round(dimensions["width"] * 0.1)
-          });
+          let watermark = await watermark_image(
+            image,
+            username,
+            dimensions["width"],
+            dimensions["height"],
+            "logo_3x.png",
+            228,
+            108,
+            24
+          );
+          return watermark;
         }
       } else {
         image[key](value);
