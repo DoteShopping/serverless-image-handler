@@ -27,6 +27,9 @@ async function watermark_image(
   logo_height,
   font_size
 ) {
+  const watermarkTargetHeight = 0.2
+  const watermarkTargetWidth = 0.1
+  const watermarkOffset = 5
   const textToSVG = TextToSVG.loadSync();
   const attributes = { fill: "white", stroke: "white" };
   const options = {
@@ -37,18 +40,20 @@ async function watermark_image(
     attributes: attributes
   };
   const svg = textToSVG.getSVG("@" + username, options);
+  // we need to chain these asynchronous calls and their resulting promises due
+  // presumably to how the event loop works when running this code on aws lambda
   return sharp(
     new Buffer.from(
       await image
         .overlayWith(logo, {
-          top: Math.round(height * 0.2),
-          left: Math.round(width * 0.1)
+          top: Math.round(height * watermarkTargetHeight),
+          left: Math.round(width * watermarkTargetWidth)
         })
         .toBuffer()
     )
   ).overlayWith(new Buffer.from(svg), {
-    top: Math.round(height * 0.2 + logo_height + 5),
-    left: Math.round(width * 0.1)
+    top: Math.round(height * watermarkTargetHeight + logo_height + watermarkOffset),
+    left: Math.round(width * watermarkTargetWidth)
   });
 }
 
@@ -255,5 +260,4 @@ class ImageHandler {
 }
 
 // Exports
-//module.exports = watermark_image;
 module.exports = ImageHandler;
