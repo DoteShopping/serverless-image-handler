@@ -23,7 +23,7 @@ class ImageHandler {
   async process(request) {
     const originalImage = request.originalImage;
     const edits = request.edits;
-    if (edits !== undefined) {
+    if (edits !== undefined && edits.constructor === Object && Object.entries(edits).length >= 0) {
       const modifiedImage = await this.applyEdits(originalImage, edits);
       if (request.outputFormat !== undefined) {
         await modifiedImage.toFormat(request.outputFormat);

@@ -176,7 +176,7 @@ class ImageRequest {
     const matchThumbor = new RegExp(
       /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/
     );
-    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/);
+    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/, 'i');
     const definedEnvironmentVariables =
       process.env.REWRITE_MATCH_PATTERN !== "" &&
       process.env.REWRITE_SUBSTITUTION !== "" &&
