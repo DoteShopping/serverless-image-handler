@@ -83,7 +83,7 @@ class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === "Thumbor" || requestType === "Custom") {
+    } else if (requestType === "Thumbor" || requestType === "Custom" || requestType == "Passthrough") {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
@@ -120,6 +120,8 @@ class ImageRequest {
         thumborMapping.process(parsedPath);
       }
       return thumborMapping.edits;
+    } else if (requestType == "Passthrough") {
+      return {};
     } else {
       throw {
         status: 400,
@@ -141,7 +143,7 @@ class ImageRequest {
       // Decode the image request and return the image key
       const decoded = this.decodeRequest(event);
       return decoded.key;
-    } else if (requestType === "Custom") {
+    } else if (requestType === "Custom" || requestType == "Passthrough") {
       const key = event.path.split("/");
       key.shift();
       return key.join("/");
@@ -177,6 +179,7 @@ class ImageRequest {
       /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/
     );
     const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/, 'i');
+    const matchPassthrough = new RegExp(/(\/?)(.*)(aspx|fcgi)/, 'i');
     const definedEnvironmentVariables =
       process.env.REWRITE_MATCH_PATTERN !== "" &&
       process.env.REWRITE_SUBSTITUTION !== "" &&
@@ -189,6 +192,8 @@ class ImageRequest {
     } else if (matchCustom.test(path)) {
       // use rewrite function then thumbor mappings
       return "Custom";
+    } else if (matchPassthrough.test(path)) {
+      return "Passthrough";
     } else {
       throw {
         status: 400,
