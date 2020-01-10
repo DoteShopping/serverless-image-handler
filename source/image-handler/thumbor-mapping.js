@@ -180,6 +180,15 @@ class ThumborMapping {
         this.edits.resize = {};
       }
       this.edits.resize.fit = "inside";
+    } else if (key == "watermark") {
+      if (this.edits.watermark === undefined) {
+        this.edits.watermark = {};
+      }
+      const values = value.split(",");
+      this.edits.watermark = {
+        width: values[0],
+        height: values[1]
+      };
     } else {
       return undefined;
     }

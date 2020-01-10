@@ -83,7 +83,7 @@ class ImageRequest {
         const sourceBuckets = this.getAllowedSourceBuckets();
         return sourceBuckets[0];
       }
-    } else if (requestType === "Thumbor" || requestType === "Custom") {
+    } else if (requestType === "Thumbor" || requestType === "Custom" || requestType == "Passthrough") {
       // Use the default image source bucket env var
       const sourceBuckets = this.getAllowedSourceBuckets();
       return sourceBuckets[0];
@@ -120,6 +120,8 @@ class ImageRequest {
         thumborMapping.process(parsedPath);
       }
       return thumborMapping.edits;
+    } else if (requestType == "Passthrough") {
+      return {};
     } else {
       throw {
         status: 400,
@@ -141,7 +143,7 @@ class ImageRequest {
       // Decode the image request and return the image key
       const decoded = this.decodeRequest(event);
       return decoded.key;
-    } else if (requestType === "Custom") {
+    } else if (requestType === "Custom" || requestType == "Passthrough") {
       const key = event.path.split("/");
       key.shift();
       return key.join("/");
@@ -170,32 +172,32 @@ class ImageRequest {
   parseRequestType(event) {
     const path = event["path"];
     // ----
+    const matchTemp = new RegExp(
+      /\/[0-9]+\/temp$/
+    );
     const matchDefault = new RegExp(
       /^(\/?)([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/
     );
     const matchThumbor = new RegExp(
       /^(\/?)((fit-in)?|(filters:.+\(.?\))?|(unsafe)?).*(.+jpg|.+png|.+webp|.+tiff|.+jpeg)$/
     );
-    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/);
+    const matchCustom = new RegExp(/(\/?)(.*)(jpg|png|webp|tiff|jpeg)/, 'i');
     const definedEnvironmentVariables =
       process.env.REWRITE_MATCH_PATTERN !== "" &&
       process.env.REWRITE_SUBSTITUTION !== "" &&
       process.env.REWRITE_MATCH_PATTERN !== undefined &&
       process.env.REWRITE_SUBSTITUTION !== undefined;
     // ----
-    if (matchDefault.test(path)) {
+    if (matchTemp.test(path)) {
+      return "Passthrough";
+    } else if (matchDefault.test(path)) {
       // use sharp
       return "Default";
     } else if (matchCustom.test(path)) {
       // use rewrite function then thumbor mappings
       return "Custom";
     } else {
-      throw {
-        status: 400,
-        code: "RequestTypeError",
-        message:
-          "The type of request you are making could not be processed. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp) and that your image request is provided in the correct syntax. Refer to the documentation for additional guidance on forming image requests."
-      };
+      return "Passthrough";
     }
   }
 
